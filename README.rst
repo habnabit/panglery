@@ -14,16 +14,34 @@ Here's a basic example of usage::
     def example_hook(p, spam):
         print spam
 
-    p.trigger(event='example', spam='eggs') # prints 'eggs'
+    p.trigger(event='example', spam='eggs')
+    # prints 'eggs'
 
 And a little bit more involved::
 
-    @p.add_hook(needs=['spam'], modifies=['spam'])
+    @p.add_hook(needs=['spam'], returns=['spam'])
     def modify_spam_hook(p, spam):
-        spam *= 2
+        spam = spam + ' spam'
         return {'spam': spam}
 
-    p.trigger(event='example', spam='eggs') # prints 'eggseggs'
+    p.trigger(event='example', spam='eggs')
+    # prints 'eggs spam'
+
+Hooks can also add parameters to an event which then trigger other hooks::
+
+    p = panglery.Pangler()
+
+    @p.add_hook(needs=['spam'], returns=['eggs'])
+    def make_eggs_hook(p, spam):
+        eggs = spam + ' eggs'
+        return {'eggs': eggs}
+
+    @p.add_hook(event='example', needs=['eggs']):
+    def eggs_hook(p, eggs):
+        print eggs
+
+    p.trigger(event='example', spam='eggs')
+    # prints 'eggs eggs'
 
 ..
 
