@@ -105,7 +105,7 @@ class _Hook(object):
         self.conditions = conditions
 
     def matches(self, event):
-        if not all(key in self.needs for key in event):
+        if not all(key in event for key in self.needs):
             return False
         if not all(
                 event[key] == self.conditions[key]
