@@ -10,6 +10,8 @@ class Pangler(object):
         modifies = set(modifies)
         parameters = set(needs) | modifies
         needs = parameters | set(conditions)
+        if not needs:
+            raise ValueError("tried to hook nothing")
         returns = set(returns) | modifies
         def deco(func):
             self.hooks.append(_Hook(
