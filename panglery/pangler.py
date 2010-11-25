@@ -2,11 +2,32 @@
 """
 
 class Pangler(object):
+    """A pangler.
+
+    Panglers store hooks for events and dispatch to these hooks when an event
+    is triggered. Event parameters can be modified or added.
+
+    """
+
     def __init__(self):
         self.hooks = []
 
     def add_hook(self, _func=None, needs=(), returns=(), modifies=(),
             **conditions):
+        """Add a hook to a pangler.
+
+        This method can either be used as a decorator for a function or method,
+        or standalone on a callable.
+
+         * `needs` is an iterable of parameters that this hook operates on.
+         * `returns` is an iterable of parameters that this hook will modify
+           and then pass back to the pangler.
+         * `modifies` is a convenient way to specify that this hook both needs
+           and returns a parameter.
+         * The rest of the keyword arguments are parameter predicates.
+
+        """
+
         modifies = set(modifies)
         parameters = set(needs) | modifies
         needs = parameters | set(conditions)
@@ -26,6 +47,13 @@ class Pangler(object):
             return deco
 
     def trigger(self, **event):
+        """Trigger an event.
+
+        Event parameters are passed as keyword arguments. Passing an `event`
+        argument isn't required, but generally recommended.
+
+        """
+
         if not event:
             raise ValueError("tried to trigger nothing")
         for hook in self.hooks:
