@@ -11,6 +11,7 @@ class Pangler(object):
 
     def __init__(self):
         self.hooks = []
+        self.instance = None
 
     def add_hook(self, _func=None, needs=(), returns=(), modifies=(),
             **conditions):
@@ -60,6 +61,18 @@ class Pangler(object):
             if hook.matches(event):
                 hook.execute(self, event)
 
+    # XXX maybe this should be done some other way. A classmethod?
+    def bind_object(self, instance):
+        p = type(self)()
+        p.hooks = list(self.hooks)
+        p.instance = instance
+        return p
+
+    def __get__(self, instance, owner):
+        if instance is None:
+            return self
+        return self.bind_object(instance)
+
 class _Hook(object):
     def __init__(self, func, needs, parameters, returns, conditions):
         self.func = func
@@ -75,7 +88,6 @@ class _Hook(object):
                 event[key] == self.conditions[key]
                 for key in self.conditions):
             return False
-
         return True
 
     def execute(self, pangler, event):
@@ -83,6 +95,11 @@ class _Hook(object):
             (key, value)
             for key, value in event.iteritems()
             if key in self.parameters)
-        result = self.func(pangler, **relevant)
+        # Pass the bound instance as the first argument, i.e. self.
+        if pangler.instance is not None:
+            args = pangler.instance, pangler
+        else:
+            args = pangler,
+        result = self.func(*args, **relevant)
         if result is not None:
             event.update(result)

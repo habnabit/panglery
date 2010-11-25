@@ -59,3 +59,18 @@ class TestPangler(unittest.TestCase):
 
         p.trigger(foo=3)
         self.assert_(self.fired)
+
+    def test_binding(self):
+        self.fired = False
+        class TestClass(object):
+            p = panglery.Pangler()
+            datum = 'foo'
+
+            @p.add_hook(event='test')
+            def test_hook(self2, p):
+                self.assertEqual(self2.datum, 'foo')
+                self.fired = True
+
+        inst = TestClass()
+        inst.p.trigger(event='test')
+        self.assert_(self.fired)
