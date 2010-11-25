@@ -43,6 +43,28 @@ Hooks can also add parameters to an event which then trigger other hooks::
     p.trigger(event='example', spam='eggs')
     # prints 'eggs eggs'
 
+PanglerAggregates can be used to aggregate together multiple Panglers across
+all superclasses::
+
+    class ExampleBase(object):
+        p = panglery.PanglerAggregate('hooks')
+        hooks = panglery.Pangler()
+
+        @hooks.add_hook(event='example')
+        def example_hook_base(self, p):
+            print 'spam'
+
+    class ExampleDerived(ExampleBase):
+        hooks = panglery.Pangler()
+
+        @hooks.add_hook(event='example')
+        def example_hook_derived(self, p):
+            print 'eggs'
+
+    inst = ExampleDerived()
+    inst.p.trigger(event='example')
+    # prints 'spam' and 'eggs' in some order.
+
 ..
 
   .. |panglery| replace:: ``panglery``
