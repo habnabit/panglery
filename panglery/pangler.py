@@ -1,6 +1,8 @@
 """Pangler objects for panglery.
 """
 
+import inspect
+
 class Pangler(object):
     """A pangler.
 
@@ -10,6 +12,7 @@ class Pangler(object):
     """
 
     def __init__(self):
+        super(Pangler, self).__init__()
         self.hooks = []
         self.instance = None
 
@@ -61,20 +64,40 @@ class Pangler(object):
             if hook.matches(event):
                 hook.execute(self, event)
 
-    # XXX maybe this should be done some other way. A classmethod?
-    def bind_object(self, instance):
+    def clone(self):
         p = type(self)()
         p.hooks = list(self.hooks)
-        p.instance = instance
         return p
 
     def __get__(self, instance, owner):
         if instance is None:
             return self
-        return self.bind_object(instance)
+        p = self.clone()
+        p.instance = instance
+        return p
+
+class PanglerAggregate(object):
+    def __init__(self, attr_name):
+        super(PanglerAggregate, self).__init__()
+        self.attr_name = attr_name
+
+    pangler_factory = Pangler
+    def __get__(self, instance, owner):
+        if instance is None:
+            return self
+        p = self.pangler_factory()
+        p.instance = instance
+        mro = inspect.getmro(owner)
+        for cls in mro:
+            sub_p = getattr(cls, self.attr_name, None)
+            if sub_p is None:
+                continue
+            p.hooks.extend(sub_p.hooks)
+        return p
 
 class _Hook(object):
     def __init__(self, func, needs, parameters, returns, conditions):
+        super(_Hook, self).__init__()
         self.func = func
         self.needs = needs
         self.parameters = parameters
