@@ -26,6 +26,8 @@ class Pangler(object):
             return deco
 
     def trigger(self, **event):
+        if not event:
+            raise ValueError("tried to trigger nothing")
         for hook in self.hooks:
             if hook.matches(event):
                 hook.execute(self, event)

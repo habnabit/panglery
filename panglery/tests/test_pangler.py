@@ -28,6 +28,10 @@ class TestPangler(unittest.TestCase):
         p = panglery.Pangler()
         self.assertRaises(ValueError, p.add_hook, lambda: None)
 
+    def test_triggering_nothing(self):
+        p = panglery.Pangler()
+        self.assertRaises(ValueError, p.trigger)
+
     def test_receiving_parameters(self):
         p = panglery.Pangler()
         self.fired = False
