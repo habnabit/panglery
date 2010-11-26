@@ -67,33 +67,43 @@ class Pangler(object):
     def clone(self):
         p = type(self)()
         p.hooks = list(self.hooks)
+        p.instance = self.instance
+        return p
+
+    def combine(self, *others):
+        p = self.clone()
+        for other in others:
+            p.hooks.extend(other.hooks)
+        return p
+
+    def bind(self, instance):
+        p = self.clone()
+        p.instance = instance
         return p
 
     def __get__(self, instance, owner):
         if instance is None:
             return self
-        p = self.clone()
-        p.instance = instance
-        return p
+        return self.bind(instance)
 
 class PanglerAggregate(object):
-    def __init__(self, attr_name):
+    def __init__(self, attr_name=None):
         super(PanglerAggregate, self).__init__()
         self.attr_name = attr_name
 
     pangler_factory = Pangler
     def __get__(self, instance, owner):
-        if instance is None:
+        if instance is None or self.attr_name is None:
             return self
-        p = self.pangler_factory()
-        p.instance = instance
+        p = self.pangler_factory().bind(instance)
         mro = inspect.getmro(owner)
+        others = []
         for cls in mro:
             sub_p = getattr(cls, self.attr_name, None)
             if sub_p is None:
                 continue
-            p.hooks.extend(sub_p.hooks)
-        return p
+            others.append(sub_p)
+        return p.combine(*others)
 
 class _Hook(object):
     def __init__(self, func, needs, parameters, returns, conditions):

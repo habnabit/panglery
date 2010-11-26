@@ -122,6 +122,23 @@ class TestPangler(unittest.TestCase):
         p.trigger(event='test3', foo='bar')
         self.assertEqual(self.fired, 4)
 
+    def test_combining(self):
+        self.fired = 0
+
+        p = panglery.Pangler()
+        @p.add_hook(event='test')
+        def test_hook(p):
+            self.fired |= 1
+
+        p2 = panglery.Pangler()
+        @p2.add_hook(event='test')
+        def test_hook2(p):
+            self.fired |= 2
+
+        p3 = p.combine(p2)
+        p3.trigger(event='test')
+        self.assertEqual(self.fired, 3)
+
 class TestPanglerAggregate(unittest.TestCase):
     def test_subclass_binding(self):
         self.fired = 0
@@ -165,7 +182,7 @@ class TestPanglerAggregate(unittest.TestCase):
         self.assertEqual(self.fired, 3)
 
     def test_unbound_aggregate(self):
-        agg = panglery.PanglerAggregate('foo')
+        agg = panglery.PanglerAggregate()
         class TestClass(object):
             p = agg
         self.assertEqual(TestClass.p, agg)
