@@ -95,6 +95,19 @@ class PanglerAggregate(object):
     def __get__(self, instance, owner):
         if instance is None or self.attr_name is None:
             return self
+        # Make the descriptor return a callable instead of just spewing out a
+        # new pangler.
+        return lambda: self.aggregate(instance, owner)
+
+    def aggregate(self, instance, owner):
+        """Given an instance and a class, aggregate together some panglers.
+
+        Walks every class in the MRO of the `owner` class, including `owner`,
+        collecting panglers exposed as `self.attr_name`. The resulting pangler
+        will be bound to the provided `instance`.
+
+        """
+
         p = self.pangler_factory().bind(instance)
         mro = inspect.getmro(owner)
         others = []

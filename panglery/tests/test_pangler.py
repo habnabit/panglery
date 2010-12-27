@@ -173,12 +173,12 @@ class TestPanglerAggregate(unittest.TestCase):
                 self.fired |= 8
 
         inst = TestClassD()
-        inst.p.trigger(event='test')
+        inst.p().trigger(event='test')
         self.assertEqual(self.fired, 15)
 
         self.fired = 0
         inst = TestClassB()
-        inst.p.trigger(event='test')
+        inst.p().trigger(event='test')
         self.assertEqual(self.fired, 3)
 
     def test_unbound_aggregate(self):
@@ -186,3 +186,4 @@ class TestPanglerAggregate(unittest.TestCase):
         class TestClass(object):
             p = agg
         self.assertEqual(TestClass.p, agg)
+        self.assertEqual(TestClass().p, agg)

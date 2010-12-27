@@ -2,8 +2,7 @@
 Panglery
 ========
 
-|panglery| is a library for writing hooks for events in python. Event hooks
-can be separated out into plugins with |panglery|'s |exocet|_ integration.
+|panglery| is a library for writing hooks for events in python.
 
 Here's a basic example of usage::
 
