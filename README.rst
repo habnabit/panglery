@@ -61,7 +61,7 @@ all superclasses::
             print 'eggs'
 
     inst = ExampleDerived()
-    inst.p.trigger(event='example')
+    inst.p().trigger(event='example')
     # prints 'spam' and 'eggs' in some order.
 
 ..
