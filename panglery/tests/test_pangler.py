@@ -6,7 +6,7 @@ class TestPangler(unittest.TestCase):
         p = panglery.Pangler()
         self.fired = False
 
-        @p.add_hook(event='test')
+        @p.subscribe(event='test')
         def test_hook(p):
             self.fired = True
 
@@ -19,14 +19,14 @@ class TestPangler(unittest.TestCase):
 
         def test_hook(p):
             self.fired = True
-        p.add_hook(test_hook, event='test')
+        p.subscribe(test_hook, event='test')
 
         p.trigger(event='test')
         self.assert_(self.fired)
 
     def test_hooking_nothing(self):
         p = panglery.Pangler()
-        self.assertRaises(ValueError, p.add_hook, lambda: None)
+        self.assertRaises(ValueError, p.subscribe, lambda: None)
 
     def test_triggering_nothing(self):
         p = panglery.Pangler()
@@ -36,7 +36,7 @@ class TestPangler(unittest.TestCase):
         p = panglery.Pangler()
         self.fired = False
 
-        @p.add_hook(needs=['test'])
+        @p.subscribe(needs=['test'])
         def test_hook(p, test):
             self.assertEqual(test, 'testval')
             self.fired = True
@@ -48,11 +48,11 @@ class TestPangler(unittest.TestCase):
         p = panglery.Pangler()
         self.fired = False
 
-        @p.add_hook(modifies=['foo'])
+        @p.subscribe(modifies=['foo'])
         def foo_hook(p, foo):
             return {'foo': foo * 2}
 
-        @p.add_hook(needs=['foo'])
+        @p.subscribe(needs=['foo'])
         def foo_hook2(p, foo):
             self.assertEqual(foo, 6)
             self.fired = True
@@ -66,7 +66,7 @@ class TestPangler(unittest.TestCase):
             p = panglery.Pangler()
             datum = 'foo'
 
-            @p.add_hook(event='test')
+            @p.subscribe(event='test')
             def test_hook(self2, p):
                 self.assertEqual(self2.datum, 'foo')
                 self.fired = True
@@ -116,7 +116,7 @@ class TestPangler(unittest.TestCase):
         p = panglery.Pangler()
         self.fired = False
 
-        @p.add_hook(event='test')
+        @p.subscribe(event='test')
         def test_hook(p):
             self.fired = True
 
@@ -136,15 +136,15 @@ class TestPangler(unittest.TestCase):
         p = panglery.Pangler()
         self.fired = 0
 
-        @p.add_hook(event='test1')
+        @p.subscribe(event='test1')
         def test1_hook(p):
             self.fired |= 1
 
-        @p.add_hook(event='test2')
+        @p.subscribe(event='test2')
         def test2_hook(p):
             self.fired |= 2
 
-        @p.add_hook(needs=['foo'])
+        @p.subscribe(needs=['foo'])
         def foo_hook(p, foo):
             self.fired |= 4
 
@@ -163,12 +163,12 @@ class TestPangler(unittest.TestCase):
         self.fired = 0
 
         p = panglery.Pangler()
-        @p.add_hook(event='test')
+        @p.subscribe(event='test')
         def test_hook(p):
             self.fired |= 1
 
         p2 = panglery.Pangler()
-        @p2.add_hook(event='test')
+        @p2.subscribe(event='test')
         def test_hook2(p):
             self.fired |= 2
 
@@ -184,28 +184,28 @@ class TestPanglerAggregate(unittest.TestCase):
             hooks = panglery.Pangler()
             p = panglery.PanglerAggregate('hooks')
 
-            @hooks.add_hook(event='test')
+            @hooks.subscribe(event='test')
             def test_hookA(_, p):
                 self.fired |= 1
 
         class TestClassB(TestClassA):
             hooks = panglery.Pangler()
 
-            @hooks.add_hook(event='test')
+            @hooks.subscribe(event='test')
             def test_hookB(_, p):
                 self.fired |= 2
 
         class TestClassC(TestClassA):
             hooks = panglery.Pangler()
 
-            @hooks.add_hook(event='test')
+            @hooks.subscribe(event='test')
             def test_hookC(_, p):
                 self.fired |= 4
 
         class TestClassD(TestClassB, TestClassC):
             hooks = panglery.Pangler()
 
-            @hooks.add_hook(event='test')
+            @hooks.subscribe(event='test')
             def test_hookD(_, p):
                 self.fired |= 8
 

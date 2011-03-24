@@ -1,6 +1,8 @@
 """Pangler objects for panglery.
 """
 
+import functools
+import warnings
 import inspect
 import weakref
 
@@ -40,7 +42,7 @@ class Pangler(object):
         self.hooks = []
         self.instance = None
 
-    def add_hook(self, _func=None, needs=(), returns=(), modifies=(),
+    def subscribe(self, _func=None, needs=(), returns=(), modifies=(),
             **conditions):
         """Add a hook to a pangler.
 
@@ -73,6 +75,12 @@ class Pangler(object):
             deco(_func)
         else:
             return deco
+
+    @functools.wraps(subscribe)
+    def add_hook(self, *a, **kw):
+        warnings.warn("use subscribe instead of add_hook", DeprecationWarning)
+        self.subscribe(*a, **kw)
+
 
     def trigger(self, **event):
         """Trigger an event.
