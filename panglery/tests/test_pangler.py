@@ -105,6 +105,13 @@ class TestPangler(unittest.TestCase):
         self.assert_(inst.p2 is inst.p2)
         self.assert_(inst.p1 is not inst.p2)
 
+    def test_disabling_caching(self):
+        class TestClass(object):
+            p = panglery.Pangler(None)
+
+        inst = TestClass()
+        self.assert_(inst.p is not inst.p)
+
     def test_clone(self):
         p = panglery.Pangler()
         self.fired = False
@@ -224,6 +231,13 @@ class TestPanglerAggregate(unittest.TestCase):
 
         inst = TestClass()
         self.assert_(inst.p() is inst.p())
+
+    def test_disabling_aggregate_binding_cache(self):
+        class TestClass(object):
+            p = panglery.PanglerAggregate('hooks', None)
+
+        inst = TestClass()
+        self.assert_(inst.p() is not inst.p())
 
     def test_aggregate_id(self):
         class TestClass(object):

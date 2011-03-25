@@ -28,6 +28,8 @@ class Pangler(object):
     instantiating a Pangler. The provided `id` will be used as the cache key
     instead of the default.
 
+    If a Pangler has an `id` of None, caching is disabled.
+
     """
 
     _bound_pangler_cache = weakref.WeakKeyDictionary()
@@ -135,6 +137,9 @@ class Pangler(object):
         return a Pangler which was previously bound to the provided instance.
 
         """
+
+        if self.id is None:
+            return self.bind(instance)
 
         cache = self._bound_pangler_cache.get(instance)
         if cache is None:
