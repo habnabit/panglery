@@ -75,6 +75,36 @@ class TestPangler(unittest.TestCase):
         inst.p.trigger(event='test')
         self.assert_(self.fired)
 
+    def test_descriptor_binding_cache(self):
+        class TestClass(object):
+            p = panglery.Pangler()
+
+        inst = TestClass()
+        self.assert_(inst.p is inst.p)
+
+    def test_from_cache(self):
+        class TestClass(object):
+            p = panglery.Pangler()
+            p2 = panglery.Pangler('p2')
+
+        inst = TestClass()
+        self.assertRaises(KeyError, panglery.Pangler.from_cache, inst)
+        self.assertRaises(KeyError, panglery.Pangler.from_cache, inst, 'p2')
+        p = inst.p
+        self.assert_(panglery.Pangler.from_cache(inst) is p)
+        p2 = inst.p2
+        self.assert_(panglery.Pangler.from_cache(inst, 'p2') is p2)
+
+    def test_binding_with_ids(self):
+        class TestClass(object):
+            p1 = panglery.Pangler('p1')
+            p2 = panglery.Pangler('p2')
+
+        inst = TestClass()
+        self.assert_(inst.p1 is inst.p1)
+        self.assert_(inst.p2 is inst.p2)
+        self.assert_(inst.p1 is not inst.p2)
+
     def test_clone(self):
         p = panglery.Pangler()
         self.fired = False
@@ -187,3 +217,18 @@ class TestPanglerAggregate(unittest.TestCase):
             p = agg
         self.assertEqual(TestClass.p, agg)
         self.assertEqual(TestClass().p, agg)
+
+    def test_aggregate_binding_cache(self):
+        class TestClass(object):
+            p = panglery.PanglerAggregate('hooks')
+
+        inst = TestClass()
+        self.assert_(inst.p() is inst.p())
+
+    def test_aggregate_id(self):
+        class TestClass(object):
+            hooks = panglery.Pangler()
+            p = panglery.PanglerAggregate('hooks')
+
+        inst = TestClass()
+        self.assert_(inst.p() is not inst.hooks)

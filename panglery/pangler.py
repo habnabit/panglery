@@ -2,6 +2,9 @@
 """
 
 import inspect
+import weakref
+
+_DEFAULT_ID = object()
 
 class Pangler(object):
     """A pangler.
@@ -11,8 +14,11 @@ class Pangler(object):
 
     """
 
-    def __init__(self):
+    _bound_pangler_cache = weakref.WeakKeyDictionary()
+
+    def __init__(self, id=_DEFAULT_ID):
         super(Pangler, self).__init__()
+        self.id = id
         self.hooks = []
         self.instance = None
 
@@ -65,7 +71,7 @@ class Pangler(object):
                 hook.execute(self, event)
 
     def clone(self):
-        p = type(self)()
+        p = type(self)(self.id)
         p.hooks = list(self.hooks)
         p.instance = self.instance
         return p
@@ -81,17 +87,36 @@ class Pangler(object):
         p.instance = instance
         return p
 
+    def cached_bind(self, instance):
+        cache = self._bound_pangler_cache.get(instance)
+        if cache is None:
+            # If we don't use a weak value dictionary here, the strong
+            # reference to the cached bound pangler will create an
+            # uncollectable cycle.
+            cache = self._bound_pangler_cache[instance] = (
+                weakref.WeakValueDictionary())
+        p = cache.get(self.id)
+        if p is None:
+            p = cache[self.id] = self.bind(instance)
+        return p
+
     def __get__(self, instance, owner):
         if instance is None:
             return self
-        return self.bind(instance)
+        return self.cached_bind(instance)
+
+    @classmethod
+    def from_cache(cls, instance, id=_DEFAULT_ID):
+        return cls._bound_pangler_cache[instance][id]
+
+_DEFAULT_AGGREGATE_ID = object()
 
 class PanglerAggregate(object):
-    def __init__(self, attr_name=None):
+    def __init__(self, attr_name=None, id=_DEFAULT_AGGREGATE_ID):
         super(PanglerAggregate, self).__init__()
         self.attr_name = attr_name
+        self.id = id
 
-    pangler_factory = Pangler
     def __get__(self, instance, owner):
         if instance is None or self.attr_name is None:
             return self
@@ -99,6 +124,7 @@ class PanglerAggregate(object):
         # new pangler.
         return lambda: self.aggregate(instance, owner)
 
+    pangler_factory = Pangler
     def aggregate(self, instance, owner):
         """Given an instance and a class, aggregate together some panglers.
 
@@ -108,7 +134,13 @@ class PanglerAggregate(object):
 
         """
 
-        p = self.pangler_factory().bind(instance)
+        try:
+            p = self.pangler_factory.from_cache(instance, self.id)
+        except KeyError:
+            pass
+        else:
+            return p
+        p = self.pangler_factory(self.id)
         mro = inspect.getmro(owner)
         others = []
         for cls in mro:
@@ -116,7 +148,7 @@ class PanglerAggregate(object):
             if sub_p is None:
                 continue
             others.append(sub_p)
-        return p.combine(*others)
+        return p.combine(*others).cached_bind(instance)
 
 class _Hook(object):
     def __init__(self, func, needs, parameters, returns, conditions):
