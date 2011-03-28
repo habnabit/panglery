@@ -79,7 +79,7 @@ class Pangler(object):
     @functools.wraps(subscribe)
     def add_hook(self, *a, **kw):
         warnings.warn("use subscribe instead of add_hook", DeprecationWarning)
-        self.subscribe(*a, **kw)
+        return self.subscribe(*a, **kw)
 
 
     def trigger(self, **event):
