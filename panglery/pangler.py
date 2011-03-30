@@ -20,21 +20,22 @@ class Pangler(object):
     bound methods, bound Panglers will pass `self` as the first parameter to
     their event hooks when triggered.
 
-    Bound Panglers are also cached; fetching a Pangler from the same instance
-    twice will produce the same bound Pangler both times. This is useful when
-    trying to add new hooks per-instance.
+    Bound Panglers are also persisted; fetching a Pangler from the same
+    instance twice will produce the same bound Pangler both times. This is
+    useful when trying to add new hooks per-instance.
 
     Normally, an instance can only have one Pangler bound to it in this way
-    because of the way bound Panglers are cached. To allow an instance to have
-    multiple Panglers bound and cached, one must pass the `id` parameter when
-    instantiating a Pangler. The provided `id` will be used as the cache key
+    because of the way bound Panglers are stored. To allow an instance to have
+    multiple Panglers bound and stored, one must pass the `id` parameter when
+    instantiating a Pangler. The provided `id` will be used as the store key
     instead of the default.
 
-    If a Pangler has an `id` of None, caching is disabled.
+    If a Pangler has an `id` of None, binding it will never store the bound
+    Pangler.
 
     """
 
-    _bound_pangler_cache = weakref.WeakKeyDictionary()
+    _bound_pangler_store = weakref.WeakKeyDictionary()
 
     def __init__(self, id=_DEFAULT_ID):
         super(Pangler, self).__init__()
@@ -138,8 +139,8 @@ class Pangler(object):
         p.instance = instance
         return p
 
-    def cached_bind(self, instance):
-        """Bind an instance to this Pangler, using the bound Pangler cache.
+    def stored_bind(self, instance):
+        """Bind an instance to this Pangler, using the bound Pangler store.
 
         This method functions identically to `bind`, except that it might
         return a Pangler which was previously bound to the provided instance.
@@ -149,34 +150,28 @@ class Pangler(object):
         if self.id is None:
             return self.bind(instance)
 
-        cache = self._bound_pangler_cache.get(instance)
-        if cache is None:
-            # If we don't use a weak value dictionary here, the strong
-            # reference to the cached bound pangler will create an
-            # uncollectable cycle.
-            cache = self._bound_pangler_cache[instance] = (
-                weakref.WeakValueDictionary())
-        p = cache.get(self.id)
+        store = self._bound_pangler_store.setdefault(instance, {})
+        p = store.get(self.id)
         if p is None:
-            p = cache[self.id] = self.bind(instance)
+            p = store[self.id] = self.bind(instance)
         return p
 
     def __get__(self, instance, owner):
         if instance is None:
             return self
-        return self.cached_bind(instance)
+        return self.stored_bind(instance)
 
     @classmethod
-    def from_cache(cls, instance, id=_DEFAULT_ID):
-        """Fetch a bound Pangler from the cache.
+    def from_store(cls, instance, id=_DEFAULT_ID):
+        """Fetch a bound Pangler from the store.
 
         Returns a Pangler which was previously bound to the provided instance
-        with the provided cache key. If no Pangler was previously bound, this
+        with the provided store key. If no Pangler was previously bound, this
         method raises a KeyError.
 
         """
 
-        return cls._bound_pangler_cache[instance][id]
+        return cls._bound_pangler_store[instance][id]
 
 _DEFAULT_AGGREGATE_ID = object()
 
@@ -212,7 +207,7 @@ class PanglerAggregate(object):
         """
 
         try:
-            p = self.pangler_factory.from_cache(instance, self.id)
+            p = self.pangler_factory.from_store(instance, self.id)
         except KeyError:
             pass
         else:
@@ -225,7 +220,7 @@ class PanglerAggregate(object):
             if sub_p is None:
                 continue
             others.append(sub_p)
-        return p.combine(*others).cached_bind(instance)
+        return p.combine(*others).stored_bind(instance)
 
 class _Hook(object):
     def __init__(self, func, needs, parameters, returns, conditions):
