@@ -1,5 +1,5 @@
 import unittest
-import panglery
+import panglery.pangler
 
 class TestPangler(unittest.TestCase):
     def test_basic_event(self):
@@ -105,12 +105,34 @@ class TestPangler(unittest.TestCase):
         self.assert_(inst.p2 is inst.p2)
         self.assert_(inst.p1 is not inst.p2)
 
-    def test_disabling_caching(self):
+    def test_disabling_persisting(self):
         class TestClass(object):
             p = panglery.Pangler(None)
 
         inst = TestClass()
         self.assert_(inst.p is not inst.p)
+
+    def test_binding_methods(self):
+        class TestClass(object):
+            pass
+
+        p = panglery.Pangler()
+        inst = TestClass()
+        self.assert_(p.bind(inst) is not p.bind(inst))
+        self.assert_(p.stored_bind(inst) is p.stored_bind(inst))
+
+    def test_binding_uses_weakrefs(self):
+        class TestClass(object):
+            p = panglery.Pangler()
+            @p.subscribe(event='spam')
+            def spam_event(self2, p):
+                self.assert_(False, 'this should never be called')
+
+        inst = TestClass()
+        p = inst.p
+        del inst
+        self.assertRaises(panglery.pangler.InstanceDead,
+            p.trigger, event='spam')
 
     def test_clone(self):
         p = panglery.Pangler()

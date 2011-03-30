@@ -82,7 +82,6 @@ class Pangler(object):
         warnings.warn("use subscribe instead of add_hook", DeprecationWarning)
         return self.subscribe(*a, **kw)
 
-
     def trigger(self, **event):
         """Trigger an event.
 
@@ -136,7 +135,7 @@ class Pangler(object):
         """
 
         p = self.clone()
-        p.instance = instance
+        p.instance = weakref.ref(instance)
         return p
 
     def stored_bind(self, instance):
@@ -222,6 +221,15 @@ class PanglerAggregate(object):
             others.append(sub_p)
         return p.combine(*others).stored_bind(instance)
 
+class InstanceDead(Exception):
+    """The instance bound to a Pangler is dead.
+
+    As Panglers only maintain weak references to their instances when bound,
+    the instance can be collected before the Pangler. Trying to trigger an
+    event in this case raises an InstanceDead exception.
+
+    """
+
 class _Hook(object):
     def __init__(self, func, needs, parameters, returns, conditions):
         super(_Hook, self).__init__()
@@ -247,7 +255,9 @@ class _Hook(object):
             if key in self.parameters)
         # Pass the bound instance as the first argument, i.e. self.
         if pangler.instance is not None:
-            args = pangler.instance, pangler
+            if pangler.instance() is None:
+                raise InstanceDead()
+            args = pangler.instance(), pangler
         else:
             args = pangler,
         result = self.func(*args, **relevant)
