@@ -6,3 +6,7 @@
 /.coverage
 /coverage
 /htmlcov
+/version.txt
+*.egg-info
+*.egg
+/panglery/_version.py

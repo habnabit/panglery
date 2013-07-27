@@ -1,5 +1,6 @@
 """panglery!"""
 
 from panglery.pangler import Pangler, PanglerAggregate
+from panglery._version import __version__, __sha__
 
-__version__ = '1'
+__all__ = ['Pangler', 'PanglerAggregate', '__version__', '__sha__']

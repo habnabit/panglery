@@ -1,14 +1,16 @@
-from distutils.core import setup
-from panglery import __version__ as version
+from setuptools import setup
 import os.path
 
 descr_file = os.path.join(os.path.dirname(__file__), 'README.rst')
 
 setup(
     name='panglery',
-    version=version,
 
     packages=['panglery', 'panglery.tests'],
+    setup_requires=['vcversioner'],
+    vcversioner={
+        'version_module_paths': ['panglery/_version.py'],
+    },
 
     description='event hooks for python',
     long_description=open(descr_file).read(),
