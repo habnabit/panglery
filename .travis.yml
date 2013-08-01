@@ -8,6 +8,7 @@ python:
 install:
   - pip install pytest coverage --use-mirrors
   - if [ "$(python --version 2>&1)" '>' "Python 2.6" ]; then pip install coveralls --use-mirrors; fi
+  - pip install .
 script:
   - coverage run $(which py.test) panglery
 after_success:
